@@ -36,6 +36,10 @@ CLIM_FILES=$(CLIMATE_DIR)/quarterly_climate.csv $(CLIMATE_DIR)/seasonal_climate.
 PREPPED_CLIM_FILE=$(CLIMATE_DIR)/prepped_clim_vars.csv
 ALL_CLIM_FILES= $(SPOT_VWC_FILE) $(DAILY_SW_TREAT_FILE) $(VWC_FILES) $(CLIM_FILES) $(PREPPED_CLIM_FILE)
 
+# Stan data files 
+PREP_STAN_DAT_SRC=$(CODE_DIR)/prepare_datalists_for_STAN.R
+PREP_STAN_DAT_EXE=Rscript $(PREP_STAN_DAT_SRC)
+STAN_DAT=$(TEMP_DIR)/growth_data_lists_for_stan.RData $(TEMP_DIR)/survival_data_lists_for_stan.RData $(TEMP_DIR)/recruitment_data_lists_for_stan.RData
 
 # Plot files 
 PLOT_THEME_FILE=$(FIG_DIR)/my_plotting_theme.Rdata
@@ -44,8 +48,12 @@ PLOT_THEME_EXE=Rscript $(PLOT_THEME_SRC)
 
 ## all		: Fetch data and run analysis
 .PHONY : all 
-all : fetch_vr_data fetch_climate_data
+all : $(STAN_DAT)
 
+## Make stan data files 
+$(STAN_DAT) : $(PREPPED_CLIM_FILE) $(VR_FILES) $(PREP_STAN_DAT_SRC)
+	$(PREP_STAN_DAT_EXE) $< $(VR_DIR)
+	
 ## fetch_vr_data	: Fetch all vital rate data for species and vital rates 
 .PHONY : fetch_vr_data
 fetch_vr_data : $(VR_FILES)
@@ -95,7 +103,8 @@ clean :
 	rm -rf $(ARCHIVE_DIR)
 	rm -f $(ARCHIVE_FILE)
 	rm -f $(PLOT_THEME_FILE)
-		
+	rm -f $(STAN_DAT)
+	
 ## variables	: Print variables.
 .PHONY : variables
 variables : Makefile 
