@@ -24,7 +24,7 @@ if (length(args)!=2) {
   climate_dir <- args[2]
 }
 
-load('data/temp_data/my_plotting_theme.Rdata')
+load('figures/my_plotting_theme.Rdata')
 
 dataDir1 <- file.path(input_dir, 'data', 'idaho_modern', 'soil_moisture_data', 'data', 'processed_data')
 
