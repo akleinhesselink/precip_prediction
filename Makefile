@@ -8,7 +8,7 @@ ANALYSIS_DIR=$(CODE_DIR)/analysis
 FIG_SCRIPTS_DIR=$(ANALYSIS_DIR)/figure_scripts
 ARCHIVE_DIR=$(subst .tar.gz,_archive, $(ARCHIVE_FILE))
 
-# Get VR scripts
+# Get vital rate scripts
 GET_VR_SRC=$(CODE_DIR)/get_vital_rate_data.R
 GET_VR_FUN=$(CODE_DIR)/get_vital_rate_functions.R
 GET_VR_EXE=Rscript $(GET_VR_SRC)
@@ -16,18 +16,25 @@ GET_VR_EXE=Rscript $(GET_VR_SRC)
 # Get climate scripts 
 GET_SPOT_SRC=$(CODE_DIR)/climate/get_spot_VWC.R
 GET_SPOT_EXE=Rscript $(GET_SPOT_SRC)
+VWC_TREAT_SRC=$(CODE_DIR)/climate/soilMoistureTreatmentEffects.R
+VWC_TREAT_EXE=Rscript $(VWC_TREAT_SRC)
 
 # VR files 
 VR_FILES:=$(foreach spp, $(SPP_LIST), $(foreach vr, $(VR_LIST), $(VR_DIR)/$(spp)_$(vr).csv ))
 
-# Climate files 
+# Climate files
+CLIMATE_FILES= $(SPOT_VWC_FILE) $(DAILY_SW_TREAT_FILE)
 SPOT_VWC_FILE=$(CLIMATE_DIR)/spot_VWC.csv
+DAILY_SW_TREAT_FILE=$(CLIMATE_DIR)/daily_swVWC_treatments.csv
 
-
+# Plot files 
+PLOT_THEME_FILE=$(FIG_DIR)/my_plotting_theme.Rdata
+PLOT_THEME_SRC=$(FIG_SCRIPTS_DIR)/save_plot_theme.R
+PLOT_THEME_EXE=Rscript $(PLOT_THEME_SRC)
 
 ## all		: Fetch data and run analysis
 .PHONY : all 
-all : fetch_vr_data fetch_climate_data $(TEMP_DIR)/my_plotting_theme.Rdata
+all : fetch_vr_data fetch_climate_data
 
 ## fetch_vr_data	: Fetch all vital rate data for species and vital rates 
 .PHONY : fetch_vr_data
@@ -38,13 +45,16 @@ $(VR_FILES) : $(DRIVERS) $(GET_VR_SRC) $(GET_VR_FUN)
 
 ## fetch_climate_data	: Fetch all climate data
 .PHONY : fetch_climate_data
-fetch_climate_data : $(SPOT_VWC_FILE)
+fetch_climate_data : $(DAILY_SW_TREAT_FILE)
 
-$(SPOT_VWC_FILE) : $(DRIVERS) $(GET_SPOT_SRC) $(CLIMATE_DIR)/daily_VWC.csv $(CLIMATE_DIR)/season_table.csv
+$(DAILY_SW_TREAT_FILE) : $(DRIVERS) $(VWC_TREAT_SRC) $(SPOT_VWC_FILE) $(DAILY_VWC_FILE) $(SEASON_FILE) $(PLOT_THEME_FILE)
+	$(VWC_TREAT_EXE) $< $(CLIMATE_DIR)
+
+$(SPOT_VWC_FILE) : $(DRIVERS) $(GET_SPOT_SRC) $(DAILY_VWC_FILE) $(SEASON_FILE)
 	$(GET_SPOT_EXE)	$< $(CLIMATE_DIR)
 
-$(TEMP_DIR)/my_plotting_theme.Rdata : $(FIG_SCRIPTS_DIR)/save_plot_theme.R
-	Rscript $<
+$(PLOT_THEME_FILE) : $(PLOT_THEME_SRC)
+	$(PLOT_THEME_EXE)
 
 ## archive 		: make tar.gz archive of project
 .PHONY : archive 
@@ -64,27 +74,13 @@ clean :
 	rm -f $(VR_DIR)/*
 	rm -rf $(ARCHIVE_DIR)
 	rm -f $(ARCHIVE_FILE)
-	rm -f $(SPOT_VWC_FILE)
-	rm -f $(TEMP_DIR)/my_plotting_theme.Rdata
-	
+	rm -f $(CLIMATE_FILES)
+	rm -f $(PLOT_THEME_FILE)
+		
 ## variables	: Print variables.
 .PHONY : variables
 variables : Makefile 
-	@echo DRIVERS: $(DRIVERS)
-	@echo SPP_LIST: $(SPP_LIST)
-	@echo VR_LIST: $(VR_LIST)
-	@echo DATA_DIR: $(DATA_DIR)
-	@echo CODE_DIR: $(CODE_DIR)
-	@echo VR_DIR: $(VR_DIR)
-	@echo VR_FILES: $(VR_FILES)
-	@echo GET_VR_SRC: $(GET_VR_SRC)
-	@echo GET_VR_FUN: $(GET_VR_FUN)
-	@echo ARCHIVE_FILE: $(ARCHIVE_FILE)
-	@echo ARCHIVE_DIR: $(ARCHIVE_DIR)
-	@echo CLIMATE_DIR: $(CLIMATE_DIR)
-	@echo FIG_SCRIPTS_DIR: $(FIG_SCRIPTS_DIR)
-	@echo ANALYSIS_DIR: $(ANALYSIS_DIR)
-	@echo TEMP_DIR: $(TEMP_DIR)
+	@$(foreach V,$(sort $(.VARIABLES)),$(if $(filter-out environment% default automatic,$(origin $V)),$(warning $V=$($V) ($(value $V)))))
 	
 ## help		: Help Menu
 .PHONY : help
