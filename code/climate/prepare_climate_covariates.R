@@ -14,18 +14,18 @@ library(zoo)
 args = commandArgs(trailingOnly=TRUE)
 
 # test if there is at least one argument: if not, return an error
-if (length(args)!=1) {
-  stop("Supply location of 'driversdata' directory and climate directory", call.=FALSE)
-} else if (length(args)==1) {
+if (length(args)!=2) {
+  stop("Supply seasonal climate file and seasonal VWC file", call.=FALSE)
+} else if (length(args)==2) {
   # default output file
-  climate_dir <- args[1]
+  seasonal_clim <- args[1]
+  seasonal_VWC  <- args[2]
 }
 
 # ------- load files ------------------------------------------------------------------ 
-
-seasonal_clim <- read.csv(file.path(climate_dir, 'seasonal_climate.csv'))
-seasonal_VWC  <- read.csv(file.path(climate_dir, 'seasonal_VWC.csv'))
-
+clim_dir <- dirname( seasonal_clim)
+seasonal_clim <- read.csv(seasonal_clim)
+seasonal_VWC  <- read.csv(seasonal_VWC)
 # ------ calculate seasonal lags -----------------------------------------------------# 
 #
 #   Variable names follow these conventions: 
@@ -84,7 +84,8 @@ q_VWC <-
   ungroup() %>% 
   gather( var, val, starts_with('VWC')) %>% 
   filter( !is.na(val)) %>%
-  spread( var, val) 
+  spread( var, val) %>% 
+  mutate( Treatment = factor(Treatment))
 
 q_precip <- 
   seasonal_clim %>% 
@@ -145,4 +146,5 @@ allClim$year <- allClim$year - 1 # adjust to match assignment of year 0 as the r
 # 
 # ---- output ----------------------------------------------------------------------------# 
 
-write.csv( data.frame( allClim ) , file.path(climate_dir, 'prepped_clim_vars.csv'), row.names = F)
+write.csv( data.frame( allClim ) , file.path( clim_dir , 'prepped_clim_vars.csv'), row.names = F)
+

@@ -12,24 +12,28 @@ library(MASS)
 args = commandArgs(trailingOnly=TRUE)
 
 # test if there is at least one argument: if not, return an error
-if (length(args)!=2) {
-  stop("Supply location of 'driversdata' directory and climate directory", call.=FALSE)
-} else if (length(args)==2) {
+if (length(args)!=3) {
+  stop("Supply location of 'driversdata' directory, season table and daily_VWC file", call.=FALSE)
+} else if (length(args)==3) {
   # default output file
-  input_dir <- args[1]
-  climate_dir <- args[2]
+  drivers_dir <- args[1]
+  season_tab <- args[2]
+  daily_vwc_file <- args[3]
 }
 
-dataDir1 <- file.path(input_dir, 'data', 'idaho_modern', 'soil_moisture_data', 'data', 'processed_data')
+dataDir1 <- file.path(drivers_dir, 'data', 'idaho_modern', 'soil_moisture_data', 'data', 'processed_data')
 
 # import soil moisture and climate data from driversdata
 myVWC <- readRDS(file.path(dataDir1, 'decagon_data_with_station_data.RDS'))
 daily_clim <- readRDS(file.path(dataDir1, 'daily_station_dat_rainfall.RDS'))
 spotVWC <- readRDS(file.path(dataDir1, 'spring_spot_measurements.RDS'))
 
-# local project data 
-seasons <- read.csv(file.path(climate_dir, 'season_table.csv'))
-swVWC <- read.csv(file.path( climate_dir, 'daily_VWC.csv')) # soil wat output file exported by climate/ExtractData_3Runs.R, requires SoilWat package
+# local project data ----------------------------------------------------- # 
+seasons <- read.csv(season_tab)
+swVWC <- read.csv(daily_vwc_file) # soil wat output file exported by climate/ExtractData_3Runs.R, requires SoilWat package
+climate_dir <- dirname(daily_vwc_file)
+
+# ------------------------------------------------------------------------- # 
 
 spotVWC <- 
   spotVWC %>% 

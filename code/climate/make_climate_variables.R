@@ -16,26 +16,28 @@ library(stringr)
 args = commandArgs(trailingOnly=TRUE)
 
 # test if there is at least one argument: if not, return an error
-if (length(args)!=2) {
-  stop("Supply location of 'driversdata' directory and climate directory", call.=FALSE)
-} else if (length(args)==2) {
+if (length(args)!=3) {
+  stop("Supply location of 'driversdata' directory, season table, and plot theme", call.=FALSE)
+} else if (length(args)==3) {
   # default output file
   input_dir <- args[1]
-  climate_dir <- args[2]
+  season_tab <- args[2]
+  figure_theme <- args[3]
 }
 
-load('data/temp_data/my_plotting_theme.Rdata')
-
-dataDir1 <- file.path(input_dir, 'data', 'idaho_modern', 'climateData')
-
 # ----- read in drivers data data ------------------------------------------------------------#
+dataDir1 <- file.path(input_dir, 'data', 'idaho_modern', 'climateData')
 
 old_climate_files <- dir( dataDir1, pattern = 'Zachman', full.names = T) # Climate Data from Ecological Archives 
 old_station_dat <- lapply(old_climate_files, read.csv)
 station_dat <- read.csv(file.path(dataDir1, 'USSES_climate_monthly_new.csv'))
 
 # ----- local data -------------------------------------------- # 
-season <- read.csv(file.path(climate_dir, 'season_table.csv'))
+load(figure_theme)
+season <- read.csv(season_tab)
+
+# output dir------------------ 
+climate_dir <- dirname(season_tab)
 
 # --------------------------------------------------------------- # 
 
@@ -51,7 +53,6 @@ p1 <- data.frame( Period = 'Modern', year = 2007:2016)
 p2 <- data.frame( Period = 'not monitored', year = 1958:2006)
 p3 <- data.frame( Period = 'Historical', year = 1925:1957)
 periods <- data.frame( rbind( p1, p2, p3 )) 
-
 
 # --------------------------------------------------------------- # 
 
@@ -224,7 +225,7 @@ annual_clim <- left_join( annual_clim, periods )
 
 # aggregate daily to monthly for Peter
 
-station_dat_daily <- read.csv('~/driversdata/data/idaho_modern/climateData/USSES_climate.csv')
+station_dat_daily <- read.csv(file.path( dataDir1, 'USSES_climate.csv'))
 station_dat_daily$date <- as.POSIXct( strptime( station_dat_daily$DATE, format = '%Y%m%d', tz = 'MST')    )
 
 station_dat_daily <- station_dat_daily %>% dplyr::select( date, STATION, STATION_NAME, PRCP, TMAX, TMIN )  

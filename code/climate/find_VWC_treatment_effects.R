@@ -1,42 +1,49 @@
+#!/usr/bin/env Rscript
+
 # calculate treatment effects compared to control soil moisture 
 
 rm(list = ls()) 
 
-library( ggplot2 ) 
+library(ggplot2) 
 library(tidyr)
 library(dplyr)
 library(lme4)
 library(zoo)
 library(lsmeans)
 library(texreg)
-library(xtable )
+library(xtable)
 library(MASS)
-
 
 args = commandArgs(trailingOnly=TRUE)
 
 # test if there is at least one argument: if not, return an error
-if (length(args)!=2) {
-  stop("Supply location of 'driversdata' directory and climate directory", call.=FALSE)
-} else if (length(args)==2) {
+if (length(args)!=5) {
+  stop("Supply location of 'driversdata' directory, season table, daily_VWC, spot_VWC and plot_theme", call.=FALSE)
+} else if (length(args)==5) {
   # default output file
-  input_dir <- args[1]
-  climate_dir <- args[2]
+  drivers_dir <- args[1]
+  season_tab <- args[2]
+  daily_vwc_file <- args[3]
+  spot_vwc_file <- args[4]
+  plot_theme <- args[5]
 }
 
-load('figures/my_plotting_theme.Rdata')
-
-dataDir1 <- file.path(input_dir, 'data', 'idaho_modern', 'soil_moisture_data', 'data', 'processed_data')
-
+dataDir1 <- file.path(drivers_dir, 'data', 'idaho_modern', 'soil_moisture_data', 'data', 'processed_data')
 
 # import drivers data climate and soil moisture data 
 myVWC <- readRDS(file.path(dataDir1, 'decagon_data_with_station_data.RDS'))
 daily_clim <- readRDS(file.path(dataDir1, 'daily_station_dat_rainfall.RDS'))
 
-# local climate data 
-seasons <- read.csv(file.path(climate_dir, 'season_table.csv'))
-swVWC <- read.csv(file.path( climate_dir, 'daily_VWC.csv'))
-spotVWC <- read.csv(file.path( climate_dir, 'spot_VWC.csv'))
+# local climate data ---------------------------------------------------- 
+seasons <- read.csv(season_tab)
+swVWC <- read.csv(daily_vwc_file)
+spotVWC <- read.csv(spot_vwc_file)
+load(plot_theme)
+
+# output directories and files -------------------------------------------- # 
+clim_dir <- dirname(season_tab)
+fig_dir <- dirname(plot_theme)
+statsOutput <- 'manuscript/soil_moisture_model.tex'
 
 # --------------------------------------------------------------------------------------#
 myVWC <- myVWC %>% 
@@ -107,10 +114,8 @@ summary(mTreatment)
 mTreatment <- lmer(update(formula(mTreatment) , . ~ . + (1|simple_date) + (1|PrecipGroup)), data = VWC_test, weights = VWC_test$weight)
 summary(mTreatment)
 
-
 test <- lsmeans(mTreatment,  ~ Treatment + season + rainfall)
 #test <- lsm(mTreatment, ~ Treatment + season + rainfall )
-
 
 tab <- summary(test)
 
@@ -118,11 +123,8 @@ tab <-  data.frame(tab)
 
 tab <- as.data.frame(tab) %>%  dplyr::select(season, rainfall,  Treatment, lsmean, SE, asymp.LCL, asymp.UCL ) %>% arrange(season, rainfall, Treatment )
 
-statsOutput <- 'manuscript/soil_moisture_model.tex'
-
 texreg(mTreatment,caption="Treatment effects on soil moisture. Intercept refers to drought effects in fall not rainy conditions.  Model fit to the continuously logged soil moisture data as well as the spot measurements collected from all plots in the spring.",
        caption.above=TRUE,file=statsOutput, label = 'table:soil_moisture_model')
-
 
 # data frame to view predictions 
 pred_df <- expand.grid( rainfall = unique(VWC_test$rainfall), Treatment = unique(VWC_test$Treatment), season = unique(VWC_test$season))
@@ -168,8 +170,6 @@ plot_df <-
   plot_df %>% 
   mutate( back_scaled_pred = predicted*sd(observed[Treatment == 'Control']) + mean(observed[Treatment == 'Control']))
 
-head( plot_df)
-
 plot_df <- plot_df %>% dplyr::select( -predicted) %>% distinct() %>% rename(predicted = back_scaled_pred )  %>% gather( type, VWC, predicted , observed )
 
 everyday <- expand.grid( simple_date = seq.Date(as.Date('2012-01-01'), as.Date( '2016-12-30'), 1), Treatment = c('Control', 'Drought', 'Irrigation'), type = c('predicted', 'observed'))
@@ -177,8 +177,6 @@ everyday <- expand.grid( simple_date = seq.Date(as.Date('2012-01-01'), as.Date( 
 plot_df <- merge( everyday, plot_df, all.x = T)
 
 plot_df <- plot_df %>% mutate( julian_date = as.numeric(strftime( simple_date, '%j')), year = as.numeric( strftime( simple_date, '%Y'))) 
-
-subset(plot_df, type != 'predicted')
 
 ggplot( plot_df, aes( x = julian_date, y = VWC, color = Treatment, linetype = type, alpha = type )) + 
   geom_line() + 
@@ -188,7 +186,8 @@ ggplot( plot_df, aes( x = julian_date, y = VWC, color = Treatment, linetype = ty
   scale_alpha_manual(values = c(1, 0.7)) + 
   my_theme
 
-png( 'figures/avg_daily_soil_moisture.png', width = 5, height = 6, res = 300, units = 'in')
+png(file.path(fig_dir, 'avg_daily_soil_moisture.png'), 
+    width = 5, height = 6, res = 300, units = 'in')
 print( 
   ggplot( subset( plot_df, type != 'predicted'), aes( x = julian_date, y = VWC, color = Treatment)) + 
     geom_line(alpha = 0.8) + 
@@ -243,9 +242,6 @@ daily_clim <-
 swVWC <- left_join(swVWC, seasons, by = 'month')
 swVWC <- left_join( swVWC, daily_clim, by = c('date')) 
 
-head(swVWC)
-head(daily_VWC2)
-
 soilWAT <- swVWC %>% dplyr::select( simple_date, modelVWC, year, season, rainfall)
 soilWAT$SW_predicted <- soilWAT$modelVWC
 daily_VWC2$observed <- daily_VWC2$Control
@@ -281,7 +277,8 @@ swVWC <-
 swVWC$VWC_raw <- swVWC$VWC*Control_sd + Control_mean
 
 
-pdf( 'figures/modeled_soilwat_soil_moisture_example.pdf', width = 8, height = 6)
+pdf( file.path(fig_dir, 'modeled_soilwat_soil_moisture_example.pdf'), 
+     width = 8, height = 6)
 print( 
   ggplot( swVWC, aes( x = date, y = VWC_raw, color = Treatment)) + 
     geom_line() + 
@@ -289,6 +286,7 @@ print(
     xlim( as.Date( c('2016-01-01', '2016-10-01')))
 )
 dev.off()
+
 print( 
   ggplot( swVWC, aes( x = date, y = VWC, color = Treatment)) + 
     geom_line() + 
@@ -297,5 +295,5 @@ print(
 )
 
 # write data as a RDS 
-write.csv(swVWC, 'data/climate/daily_swVWC_treatments.csv', row.names = F)
+write.csv(swVWC, file.path(clim_dir, 'daily_SOILWAT_VWC_treatments.csv'), row.names = F)
 

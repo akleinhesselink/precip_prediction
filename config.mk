@@ -1,6 +1,5 @@
-
 # set driversdata directory 
-DRIVERS=/home/andy/driversdata 
+DRIVERS=$(HOME)/driversdata 
 
 SPP_LIST:=ARTR HECO POSE PSSP
 VR_LIST:=growth survival recruitment

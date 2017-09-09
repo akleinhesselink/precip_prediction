@@ -16,18 +16,22 @@ library(stringr)
 args = commandArgs(trailingOnly=TRUE)
 
 # test if there is at least one argument: if not, return an error
-if (length(args)!=1) {
-  stop("Supply location of climate directory", call.=FALSE)
-} else if (length(args)==1) {
+if (length(args)!=2) {
+  stop("Supply location daily_swVWC_treatment data and plotting theme", call.=FALSE)
+} else if (length(args)==2) {
   # default output file
-  climate_dir <- args[1]
+  VWC_file <- args[1]
+  plot_theme <- args[2]
 }
 
-load('figures/my_plotting_theme.Rdata')
 
 # ----- read in data --------------------------------------------------------------------#
-VWC <- read.csv(file.path(climate_dir, 'daily_swVWC_treatments.csv'))
+load(plot_theme)
 
+VWC <- read.csv(VWC_file)
+
+climate_dir <- dirname(VWC_file) 
+fig_dir <- 'figures'
 # make time periods --------------------------------------------------------------------
 
 p1 <- data.frame( Period = 'Modern', year = 2007:2016)
@@ -62,7 +66,7 @@ monthly_avgs <-
     summarise (avg_VWC = mean(VWC_raw, na.rm = TRUE) )  
 
 
-png( 'figures/longterm_monthly_soilwat.png', height = 5, width = 5, res = 300, units = 'in')
+png( file.path(fig_dir,'longterm_monthly_soilwat.png'), height = 5, width = 5, res = 300, units = 'in')
 print( 
 ggplot( monthly_avgs, aes( x = factor( month) , y = avg_VWC) ) + 
   geom_boxplot()  + 
@@ -115,7 +119,7 @@ modern$season <- factor(modern$season, levels = c('winter', 'spring', 'summer', 
 
 # make plot of seasonal moisture during the experiment  ------------------------------------------- # 
 
-png('figures/modern_soil_moisture_comparison.png', width = 6, height = 6, res = 300, units  = 'in')
+png(file.path(fig_dir,'modern_soil_moisture_comparison.png'), width = 6, height = 6, res = 300, units  = 'in')
 
 print( 
 ggplot( modern %>% filter( year > 2011), aes( x = year, y = avg, color = Treatment ) ) + 
@@ -132,7 +136,7 @@ ggplot( modern %>% filter( year > 2011), aes( x = year, y = avg, color = Treatme
 
 dev.off()
 
-png('figures/modern_soil_moisture_comparison_spring.png', width = 5, height = 3, res = 300, units  = 'in')
+png(file.path(fig_dir,'modern_soil_moisture_comparison_spring.png'), width = 5, height = 3, res = 300, units  = 'in')
 
 print( 
   ggplot( data = subset(modern, modern$season == 'spring' & modern$year > 2011), aes( x = year, y = avg, color = Treatment ) ) + 
