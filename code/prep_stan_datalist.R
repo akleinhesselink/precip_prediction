@@ -1,5 +1,6 @@
-# prepare_data_lists_for_Stan.R
+#!/usr/bin/env Rscript
 
+# prepare_data_lists_for_Stan.R
 rm(list = ls())
 
 library(dplyr)

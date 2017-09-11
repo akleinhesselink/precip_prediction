@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 # calculate treatment effects compared to control soil moisture 
 
 rm(list = ls()) 

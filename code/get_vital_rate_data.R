@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 # PBA March 2016
 # modified by ARK July 2016
 # call from precip_analysis_wrapper.r

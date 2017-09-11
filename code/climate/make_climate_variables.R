@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 #######################################################################################
 #
 # Setup seasonal climate variables for demographic rate models 

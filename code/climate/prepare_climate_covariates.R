@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 #####################################################################################
 #
 # Make climate variables from seasonal climate 

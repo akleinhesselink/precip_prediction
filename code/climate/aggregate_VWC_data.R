@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 #######################################################################################
 #
 # Setup seasonal SoilWAT variables for demographic rate models 
