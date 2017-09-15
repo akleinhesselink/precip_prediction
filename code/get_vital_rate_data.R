@@ -12,7 +12,7 @@
 source('code/get_vital_rate_functions.R')
 
 args = commandArgs(trailingOnly=TRUE)
-
+#args = c('~/driversdata', 'ARTR', 'recruitment')
 # test if there is at least one argument: if not, return an error
 if (length(args)!=3) {
   stop("Supply location of 'driversdata' directory, species name and vital rate", call.=FALSE)
@@ -23,7 +23,7 @@ if (length(args)!=3) {
   doVR <- args[3]
 }
 
-sppList <- c("ARTR","HECO","POSE","PSSP","allcov","allpts")
+sppList=c("ARTR","HECO","POSE","PSSP")
 dataDir1 <- file.path(input_dir, 'data', 'idaho')
 dataDir2 <- file.path(input_dir, 'data', 'idaho_modern')
 
@@ -33,7 +33,7 @@ output_dir  <- file.path('data', 'vital_rate')
 output_file <- paste0(doSpp, '_', doVR, '.csv')
 
 if(doVR == 'recruitment'){
-  out <- process_recruit(dataDir1, dataDir2, doSpp, doVR)
+  out <- process_recruit(dataDir1, dataDir2, doSpp, doVR, sppList)
 }else if( doVR %in% c('growth', 'survival')){
   out <- process_surv_grow(dataDir1, dataDir2, doSpp, doVR)
 }else{ stop('incorrect vital rate name provided. Must be one of "growth", "survival", "recruitment"')}
@@ -46,6 +46,7 @@ out$Treatment2 <- out$Treatment
 out$Treatment2[out$year>2000] <- "Modern"
 out$Treatment3 <- out$Treatment
 out$Treatment3[out$Treatment=="Control" & out$year>2000] <- "ControlModern"
+
 
 write.csv(out, file.path(output_dir, output_file), row.names = F) 
 

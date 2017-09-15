@@ -163,34 +163,54 @@ process_surv_grow <- function( dataDir1, dataDir2, doSpp, doVr){
   return(allD)
 }
 
-process_recruit <- function( dataDir1, dataDir2, doSpp, doVR){ 
+process_recruit <- function( dataDir1, dataDir2, doSpp, doVR, sppList){ 
   require(dplyr)
   require(tidyr)
   require(stringr)
   
   # import old data--------------------------------------------------------
-  infile1=file.path(dataDir1, 'speciesData', doSpp, "recArea.csv")
-  D=read.csv(infile1)
-  D=D[,c("quad","year","NRquad","totParea","Group")]
-  names(D)[3]=paste("R.",doSpp,sep="")
-  names(D)[4]=paste("cov.",doSpp,sep="")
-  D[is.na(D)]=0  # replace missing values 
+  Nspp=length(sppList)
+  
+  for( i in 1:Nspp){ 
+    infile1=file.path(dataDir1, 'speciesData',sppList[i], "recArea.csv")
+    tmpD=read.csv(infile1)
+    tmpD=tmpD[,c("quad","year","NRquad","totParea","Group")]
+    names(tmpD)[3]=paste("R.",sppList[i],sep="")
+    names(tmpD)[4]=paste("cov.",sppList[i],sep="")
+
+    if(i==1){
+      D=tmpD
+    }else{
+      D=merge(D,tmpD,all=T)
+    }
+  }
+
+  D[is.na(D)]<-0  # replace missing values 
   D$year <- D$year+ 1900
   
   D$Treatment <- "Control"
   D$Period <- 'Historical'
-  
+
   # import modern data--------------------------------------------------------
-  infile1=file.path(dataDir2, 'speciesData', doSpp, "recArea.csv")
-  D2=read.csv(infile1)
-  D2=D2[,c("quad","year","NRquad","totParea","Group")]
-  names(D2)[3]=paste("R.",doSpp,sep="")
-  names(D2)[4]=paste("cov.",doSpp,sep="")
-  D2[is.na(D2)]=0  # replace missing values 
-  D2$Period <- 'Modern'
+  for( i in 1:Nspp){ 
+    infile1=file.path(dataDir2, 'speciesData', sppList[i], "recArea.csv")
+    tmpD=read.csv(infile1)
+    tmpD=tmpD[,c("quad","year","NRquad","totParea","Group")]
+    names(tmpD)[3]=paste("R.",sppList[i],sep="")
+    names(tmpD)[4]=paste("cov.",sppList[i],sep="")
+    
+    if(i==1){
+      D2=tmpD
+    }else{
+      D2=merge(D2,tmpD,all=T)
+    }
+  }
   
+  D2[is.na(D2)] <- 0  # replace missing values 
+  D2$Period <- 'Modern'
+
   # merge in treatment data
-  tmp <- read.csv(file.path(dataDir2,"quad_info.csv"))
+  tmp <- read.csv(file.path(dataDir2, 'speciesData', "quad_info.csv"))
   tmp <- tmp[,c("quad","Treatment")]
   D2 <- merge(D2,tmp, all.x=T)
   
@@ -198,21 +218,36 @@ process_recruit <- function( dataDir1, dataDir2, doSpp, doVR){
   D=rbind(D,D2)
   rm(D2)
   
+  # get rid of removal treatments
+  D <- subset(D,Treatment!="No_grass" & Treatment!="No_shrub")
+  
   # calculate mean cover by group and year
   tmpD=subset(D,Treatment=="Control") # only use control plots
-  tmpD = tmpD[,c("quad","year","Group",paste("cov.",doSpp,sep=""))]
+  tmpD = D[,c("quad","year","Group",paste("cov.",sppList,sep=""))]
   
   tmpD=aggregate(tmpD[,4:NCOL(tmpD)],by=list("year"=tmpD$year,
                                              "Group"=tmpD$Group),FUN=mean)
-  names(tmpD)[3:NCOL(tmpD)]=paste("Gcov.",doSpp,sep="")
+  
+  names(tmpD)[3:NCOL(tmpD)]=paste("Gcov.",sppList,sep="")
+
   D=merge(D,tmpD,all.x=T)
+
+  # assign indicator variables -------------------------------------------------------------------------------- # 
+  # D$Treatment2 <- D$Treatment
+  # D$Treatment2[D$year>2000] <- "Modern"
+  # D$Treatment3 <- D$Treatment
+  # D$Treatment3[D$Treatment=="Control" & D$year>2000] <- "ControlModern"
   
   # assign group level zeros to smallest non-zero value 
   historical_Gcov <- D[ D$Period == 'Historical', grep ( '^Gcov\\.', names(D) ) ]
   min_cover <- min(historical_Gcov[ historical_Gcov > 0 ] )
   D[ ,grep ( '^Gcov\\.', names(D) )][D[, grep ( '^Gcov\\.', names(D) )] == 0 ] <- min_cover
   
-  D <- D %>% gather(species, Y, starts_with('R.')) %>% mutate( species = str_replace(species, pattern = '^R.', replacement = ''))
+  D <- D %>% 
+    gather(species, Y, starts_with('R.')) %>% 
+    mutate( species = str_replace(species, pattern = '^R.', replacement = ''))
+  
+  D <- subset(D, species == doSpp)
   return(D)
 }
 
