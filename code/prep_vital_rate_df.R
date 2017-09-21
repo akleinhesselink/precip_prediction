@@ -5,7 +5,7 @@ rm(list = ls() )
 # -- select input files  -------------------------------------------------------------------#
 args = commandArgs(trailingOnly=TRUE)
 
-#args <- c('data/climate/all_clim_covs.csv', 'data/vital_rate/ARTR_growth.csv', 'data/temp_data/ARTR_survival.csv') # for testing 
+#args <- c('data/climate/all_clim_covs.csv', 'data/vital_rate/ARTR_growth.csv', 'data/vital_rate/ARTR_survival.csv') # for testing 
 
 gfile <- sfile <- rfile <- NULL
 
