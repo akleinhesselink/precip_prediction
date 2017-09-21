@@ -23,7 +23,7 @@ if (length(args)!=3) {
   doVR <- args[3]
 }
 
-sppList=c("ARTR","HECO","POSE","PSSP")
+sppList=c("ARTR","HECO","POSE","PSSP", "allcov", "allpts")
 dataDir1 <- file.path(input_dir, 'data', 'idaho')
 dataDir2 <- file.path(input_dir, 'data', 'idaho_modern')
 
@@ -35,7 +35,7 @@ output_file <- paste0(doSpp, '_', doVR, '.csv')
 if(doVR == 'recruitment'){
   out <- process_recruit(dataDir1, dataDir2, doSpp, doVR, sppList)
 }else if( doVR %in% c('growth', 'survival')){
-  out <- process_surv_grow(dataDir1, dataDir2, doSpp, doVR)
+  out <- process_surv_grow(dataDir1, dataDir2, doSpp, doVR, sppList)
 }else{ stop('incorrect vital rate name provided. Must be one of "growth", "survival", "recruitment"')}
 
 # ----------- use this data for prediction ------------------------------------------------------------------------------

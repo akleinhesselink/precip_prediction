@@ -2,12 +2,24 @@
 # Helper functions for importing vital rate data from the driversdata directory 
 #
 
+
+set_min_size <- function( size , min_size = 0.25, round_to = 4){ 
+  
+  size[ round(size, round_to) <= min_size ] <- min_size 
+  return(size)  
+}
+
+
 fetch_growth_data <- function(doSpp,speciesList,datadir,distWts){
 
   growDfile=paste(datadir,"/speciesData/",doSpp,"/growDnoNA.csv",sep="")
   growD=read.csv(file=growDfile)
   D1=growD[growD$allEdge==0,];
   D1$year <- D1$year
+  
+  D1$area.t0 <- set_min_size(D1$area.t0)
+  D1$area.t1 <- set_min_size(D1$area.t1)
+
   D1$logarea.t0=log(D1$area.t0)
   D1$logarea.t1=log(D1$area.t1)
   D1$quad=as.character(D1$quad)
@@ -103,7 +115,7 @@ fetch_survival_data <- function(doSpp,speciesList,datadir,distWts){
 }
 
 
-process_surv_grow <- function( dataDir1, dataDir2, doSpp, doVr){ 
+process_surv_grow <- function( dataDir1, dataDir2, doSpp, doVr, sppList){ 
   
   # set up distance weights------------------------------------------------
   #dists <- read.csv('~/driversdata/data/idaho/speciesData/IdahoDistanceWeights.csv')
@@ -169,14 +181,15 @@ process_recruit <- function( dataDir1, dataDir2, doSpp, doVR, sppList){
   require(stringr)
   
   # import old data--------------------------------------------------------
-  Nspp=length(sppList)
+  targetSpp <- sppList[ ! sppList %in% c('allcov', 'allpts') ] # don't do other species
+  Nspp=length(targetSpp)
   
-  for( i in 1:Nspp){ 
-    infile1=file.path(dataDir1, 'speciesData',sppList[i], "recArea.csv")
+  for( i in 1:Nspp){
+    infile1=file.path(dataDir1, 'speciesData',targetSpp[i], "recArea.csv")
     tmpD=read.csv(infile1)
     tmpD=tmpD[,c("quad","year","NRquad","totParea","Group")]
-    names(tmpD)[3]=paste("R.",sppList[i],sep="")
-    names(tmpD)[4]=paste("cov.",sppList[i],sep="")
+    names(tmpD)[3]=paste("R.",targetSpp[i],sep="")
+    names(tmpD)[4]=paste("cov.",targetSpp[i],sep="")
 
     if(i==1){
       D=tmpD
@@ -193,11 +206,11 @@ process_recruit <- function( dataDir1, dataDir2, doSpp, doVR, sppList){
 
   # import modern data--------------------------------------------------------
   for( i in 1:Nspp){ 
-    infile1=file.path(dataDir2, 'speciesData', sppList[i], "recArea.csv")
+    infile1=file.path(dataDir2, 'speciesData', targetSpp[i], "recArea.csv")
     tmpD=read.csv(infile1)
     tmpD=tmpD[,c("quad","year","NRquad","totParea","Group")]
-    names(tmpD)[3]=paste("R.",sppList[i],sep="")
-    names(tmpD)[4]=paste("cov.",sppList[i],sep="")
+    names(tmpD)[3]=paste("R.",targetSpp[i],sep="")
+    names(tmpD)[4]=paste("cov.",targetSpp[i],sep="")
     
     if(i==1){
       D2=tmpD
@@ -223,12 +236,12 @@ process_recruit <- function( dataDir1, dataDir2, doSpp, doVR, sppList){
   
   # calculate mean cover by group and year
   tmpD=subset(D,Treatment=="Control") # only use control plots
-  tmpD = D[,c("quad","year","Group",paste("cov.",sppList,sep=""))]
+  tmpD = D[,c("quad","year","Group",paste("cov.",targetSpp,sep=""))]
   
   tmpD=aggregate(tmpD[,4:NCOL(tmpD)],by=list("year"=tmpD$year,
                                              "Group"=tmpD$Group),FUN=mean)
   
-  names(tmpD)[3:NCOL(tmpD)]=paste("Gcov.",sppList,sep="")
+  names(tmpD)[3:NCOL(tmpD)]=paste("Gcov.",targetSpp,sep="")
 
   D=merge(D,tmpD,all.x=T)
 
