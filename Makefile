@@ -6,12 +6,12 @@ COVER_CHANGE_FIG=$(FIG_DIR)/start_to_finish_cover_change.png
 PLOT_SPRING_VWC_SRC=$(CODE_DIR)/analysis/figure_scripts/plot_spring_soil_moisture_spot_measures.R
 PLOT_TREAT_TRENDS_SRC=$(CODE_DIR)/analysis/treatment_trends_precip.R
 
-PREP_DF_FILES=$(wildcard $(TEMP_DIR)/*_dataframe.RDS)
-STAN_DAT_FILES=$(wildcard $(TEMP_DIR)/*_datalist_for_stan.RDS)
+#PREP_DF_FILES=$(wildcard $(TEMP_DIR)/*_dataframe.RDS)
+#STAN_DAT_FILES=$(wildcard $(TEMP_DIR)/*_datalist_for_stan.RDS)
 
 
 .PRECIOUS: $(VR_DIR)/%.csv $(TEMP_DIR)/%_dataframe.RDS
-STAN_DAT_FILES:=$(foreach spp, $(SPP_LIST), $(foreach vr, $(VR_LIST), $(TEMP_DIR)/$(spp)_$(vr)_datalist_for_stan.RDS ))
+PREP_DF_FILES:=$(foreach spp, $(SPP_LIST), $(foreach vr, $(VR_DF_LIST), $(TEMP_DIR)/$(spp)_$(vr)_dataframe.RDS ))
 
 # Helper functions and variables, these are used for substitutions 
 growth_survival=growth survival
@@ -32,7 +32,7 @@ MN = $(TEMP_DIR)/$(call join-with,_, $(word 1, $(call sep_name, $1)) $($(word 2,
 
 ## all		: Fetch data and run analysis
 .PHONY: all 
-all: $(STAN_DAT_FILES)
+all: $(PREP_DF_FILES)
 
 ## plot_clim : generate climate figures 
 .PHONY: plot_clim
@@ -45,8 +45,8 @@ $(FIG_DIR)/VWC_spot_measurements.png: $(PLOT_SPRING_VWC_SRC) $(DRIVERS) $(PLOT_T
 	./$<
  
 .SECONDEXPANSION:
-$(TEMP_DIR)/%_datalist_for_stan.RDS: $(PREP_STAN_DAT_SRC) $$(call MN, $$@) $(PREP_STAN_FUNS)
-	./$< $(call sep_name, $*) $(TEMP_DIR)
+#$(TEMP_DIR)/%_datalist_for_stan.RDS: $(PREP_STAN_DAT_SRC) $$(call MN, $$@) $(PREP_STAN_FUNS)
+#	./$< $(call sep_name, $*) $(TEMP_DIR)
 
 $(TEMP_DIR)/%_dataframe.RDS: $(PREP_DF_SRC) $(PREPPED_CLIM_FILE) $$(call FIND_VR_FILES, $$*)	$(PREP_DF_FUNS)
 	./$(filter-out $(lastword $^), $^)
@@ -95,7 +95,7 @@ clean:
 	rm -rf $(ARCHIVE_DIR)
 	rm -f $(ARCHIVE_FILE)
 	rm -f $(PLOT_THEME_FILE)
-	rm -f $(TEMP_DIR)/*
+	rm -rf $(TEMP_DIR)/*
 	
 ## variables	: Print variables.
 .PHONY: variables

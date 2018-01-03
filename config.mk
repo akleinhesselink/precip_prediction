@@ -3,6 +3,7 @@ DRIVERS=$(HOME)/driversdata
 
 SPP_LIST:=ARTR HECO POSE PSSP
 VR_LIST:=growth survival recruitment
+VR_DF_LIST:=growth_survival recruitment
 
 # project directory
 DATA_DIR=data
