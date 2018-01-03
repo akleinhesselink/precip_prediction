@@ -4,6 +4,7 @@
 args = commandArgs(trailingOnly=TRUE)
 
 #args <- c('HECO', 'recruitment', 'data/temp_data') # for testing 
+#args <- c('data/SW_files/sw_output.RData', 'data/climate/daily_VWC.csv')
 
 if (length(args)!=2) {
   stop("Supply name of soilwat data file and output filename", call.=FALSE)
