@@ -22,12 +22,14 @@ if (length(args)!=2) {
 #### BEWARE - there are empty or defenct 'slots'. Do not be alarmed
 library(DBI)
 library(RSQLite)
-# If necessary install Rsoilwat from GitHub : 
-#system2(command = "git", args = "clone -b master --single-branch --recursive https://github.com/Burke-Lauenroth-Lab/Rsoilwat.git Rsoilwat")
-# checkout version 1.1.4 
-#system('cd Rsoilwat; git checkout tags/v1.1.4;')
+# If necessary install Rsoilwat31 from local library: 
+# packrat::install_local('Rsoilwat31')
+# Or if necessary install from GitHub: 
+# system2(command = "git", args = "clone -b master --single-branch --recursive https://github.com/Burke-Lauenroth-Lab/Rsoilwat.git Rsoilwat")
+# Then checkout version 1.1.4 
+# system('cd Rsoilwat; git checkout tags/v1.1.4;')
 # install the package 
-#tools::Rcmd(args = paste("INSTALL Rsoilwat"))
+# tools::Rcmd(args = paste("INSTALL Rsoilwat"))
 library(Rsoilwat31) 
 
 #Step 1 - Set working directory
