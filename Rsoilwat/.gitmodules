@@ -1,5 +1,0 @@
-[submodule "src"]
-	path = src
-	url = https://github.com/Burke-Lauenroth-Lab/SOILWAT
-[submodule "SOILWAT"]
-	branch = master

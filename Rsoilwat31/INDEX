@@ -1,0 +1,17 @@
+Rsoilwat31              Package 'Rsoilwat31': summary information
+dbW_blob_to_weatherData
+                        Conversion: (Compressed) raw vector (e.g.,
+                        SQL-retrieved blob) to (uncompressed) object
+dbW_getSiteId           Extract weather database key to connect a site
+                        with weather data
+dbW_getWeatherData      Extracts daily weather data from a SQLite
+                        database
+dbW_weatherData_to_blob
+                        Conversion: R object to (compressed)
+                        SQL-blob-ready character vector
+getWeatherData_folders
+                        Rsoilwat getWeatherData_folders
+swInputData-class       Class '"swInputData"'
+sw_exec                 Execute a SOILWAT simulation run
+sw_inputData            Rsoilwat sw_inputData
+sw_inputDataFromFiles   Rsoilwat sw_inputDataFromFiles
