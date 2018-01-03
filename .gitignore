@@ -40,4 +40,3 @@ packrat/lib*/
 !data/SW_files/dbTables.sqlite3
 !data/SW_files/dbWeatherData.sqlite3
 !/data/SW_files/sw_output.RData
-packrat/src/
